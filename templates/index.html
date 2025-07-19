@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fake News Detection Chat</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            color: #333;
+        }
+
+        .container {
+            background: #fff;
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            width: 100%;
+            max-width: 500px;
+            max-height: 80vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        h1 {
+            font-size: 2rem;
+            margin-bottom: 1.5rem;
+            color: #444;
+            text-align: center;
+        }
+
+        .chat-box {
+            flex: 1;
+            overflow-y: auto;
+            margin-bottom: 1.5rem;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 1rem;
+            background: #f9f9f9;
+        }
+
+        .message {
+            margin-bottom: 1rem;
+        }
+
+        .message.user {
+            text-align: right;
+        }
+
+        .message.user .text {
+            background: #667eea;
+            color: #fff;
+            padding: 8px 12px;
+            border-radius: 12px;
+            display: inline-block;
+        }
+
+        .message.bot .text {
+            background: #f0f0f0;
+            color: #333;
+            padding: 8px 12px;
+            border-radius: 12px;
+            display: inline-block;
+        }
+
+        .message.bot .real-news {
+            margin-top: 10px;
+            padding: 10px;
+            background: #e9ecef;
+            border-radius: 8px;
+        }
+
+        .input-box {
+            display: flex;
+            gap: 10px;
+        }
+
+        textarea {
+            flex: 1;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 1rem;
+            resize: none;
+            transition: border-color 0.3s ease;
+        }
+
+        textarea:focus {
+            border-color: #667eea;
+            outline: none;
+        }
+
+        button {
+            padding: 12px 24px;
+            background: #667eea;
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background 0.3s ease, transform 0.2s ease;
+        }
+
+        button:hover {
+            background: #5a6fd1;
+            transform: translateY(-2px);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Fake News Detection Chat</h1>
+        <div class="chat-box" id="chat-box">
+            {% for message in chat_history %}
+            <div class="message user">
+                <div class="text">{{ message.user }}</div>
+            </div>
+            <div class="message bot">
+                <div class="text">Prediction: {{ message.prediction }}</div>
+                {% if message.real_news %}
+                <div class="real-news">
+                    <p>Here's a real news article:</p>
+                    <p><strong>{{ message.real_news.title }}</strong></p>
+                    <p>{{ message.real_news.description }}</p>
+                    <p><a href="{{ message.real_news.url }}" target="_blank">Read more</a></p>
+                </div>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+        <div class="input-box">
+            <textarea id="news-text" placeholder="Enter news text here..." required></textarea>
+            <button id="check-button">Check</button>
+        </div>
+    </div>
+
+    <script>
+        // Function to add a message to the chat box
+        function addMessageToChat(text, isUser, prediction = null, realNews = null) {
+            const chatBox = document.getElementById('chat-box');
+            const messageDiv = document.createElement('div');
+            messageDiv.classList.add('message', isUser ? 'user' : 'bot');
+
+            const textDiv = document.createElement('div');
+            textDiv.classList.add('text');
+            textDiv.textContent = isUser ? text : `Prediction: ${prediction}`;
+            messageDiv.appendChild(textDiv);
+
+            if (realNews) {
+                const realNewsDiv = document.createElement('div');
+                realNewsDiv.classList.add('real-news');
+                realNewsDiv.innerHTML = `
+                    <p>Here's a real news article:</p>
+                    <p><strong>${realNews.title}</strong></p>
+                    <p>${realNews.description}</p>
+                    <p><a href="${realNews.url}" target="_blank">Read more</a></p>
+                `;
+                messageDiv.appendChild(realNewsDiv);
+            }
+
+            chatBox.appendChild(messageDiv);
+            chatBox.scrollTop = chatBox.scrollHeight; // Scroll to the bottom
+        }
+
+        // Handle form submission
+        document.getElementById('check-button').addEventListener('click', async () => {
+            const inputText = document.getElementById('news-text').value;
+            if (!inputText) return;
+
+            // Add user message to chat
+            addMessageToChat(inputText, true);
+
+            // Send input to Flask app for prediction
+            const response = await fetch('/predict', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ news_text: inputText }),
+            });
+
+            const result = await response.json();
+            const prediction = result.prediction;
+            const realNews = result.real_news;
+
+            // Add bot message to chat
+            addMessageToChat(inputText, false, prediction, realNews);
+
+            // Clear the input textarea
+            document.getElementById('news-text').value = '';
+        });
+    </script>
+</body>
+</html>

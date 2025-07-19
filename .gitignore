@@ -1,0 +1,22 @@
+# Ignore virtual environment
+venv/
+
+# Ignore large model files
+models/
+*.safetensors
+
+# Ignore large CSV files
+data/*.csv
+
+# Python cache and compiled files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# VS Code and OS-specific files
+.vscode/
+.DS_Store
+*.dll
+*.lib
+*.pdb
