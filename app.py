@@ -10,7 +10,7 @@ model = joblib.load('models/fake_news_model.pkl')
 vectorizer = joblib.load('models/tfidf_vectorizer.pkl')
 
 # NewsAPI configuration
-NEWS_API_KEY = '5a61dea263a8453cb322bbecedc43cbd'  # Replace with your NewsAPI key
+NEWS_API_KEY = ''  # Replace with your NewsAPI key
 NEWS_API_URL = 'https://newsapi.org/v2/everything'
 
 # Store chat messages
